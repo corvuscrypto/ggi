@@ -10,9 +10,13 @@ import (
 
 var pid = os.Getpid()
 
+type requestPack struct {
+	req *http.Request
+}
+
 type responsePack struct {
 	pid int
-	res *http.ResponseWriter
+	res []byte
 }
 
 var connection struct {
@@ -23,15 +27,13 @@ var connection struct {
 
 func connHandler() {
 	for {
-		var r http.Request
+		var r requestPack
 		connection.decoder.Decode(&r)
-		if &r != nil {
-			connection.encoder.Encode(handleRequest(&r))
-		} else {
-			connection.encoder.Encode(&responsePack{
-				pid,
-				nil,
-			})
+		if &r == nil {
+			continue
+		}
+		if r.req != nil {
+			connection.encoder.Encode(handleRequest(r.req))
 		}
 	}
 }

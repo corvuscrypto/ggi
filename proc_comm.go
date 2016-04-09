@@ -5,9 +5,13 @@ import (
 	"net/http"
 )
 
+type requestPack struct {
+	req *http.Request
+}
+
 type responsePack struct {
 	pid int
-	res *http.ResponseWriter
+	res []byte
 }
 
 func (p *PManager) listenAndServe() {

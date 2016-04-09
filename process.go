@@ -3,6 +3,7 @@ package ggi
 import (
 	"encoding/gob"
 	"net"
+	"net/http"
 	"os"
 )
 
@@ -16,4 +17,14 @@ type Process struct {
 
 func (p *Process) kill() {
 	p.process.Kill()
+}
+
+func (p *Process) sendReq(w http.ResponseWriter, r *http.Request) {
+	p.encoder.Encode(r)
+	var res responsePack
+	p.decoder.Decode(&res)
+	if &res == nil {
+		w.WriteHeader(http.StatusBadGateway)
+	}
+	w.Write(res.res)
 }
