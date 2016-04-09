@@ -15,8 +15,9 @@ type requestPack struct {
 }
 
 type responsePack struct {
-	pid int
-	res []byte
+	pid  int
+	code int
+	res  []byte
 }
 
 var connection struct {
