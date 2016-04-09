@@ -4,7 +4,6 @@ import (
 	"encoding/gob"
 	"log"
 	"net"
-	"net/http"
 	"os"
 )
 
@@ -12,13 +11,8 @@ var processManagers = []*PManager{}
 
 //PManager is the primary process manager
 type PManager struct {
-	processes []*Process
+	processes map[int]*Process
 	socket    *net.UnixListener
-}
-
-//intermediary function
-func (p *PManager) send(r *http.Request) *http.Response {
-	return nil
 }
 
 //spawn a process and setup the connection
@@ -38,7 +32,7 @@ func (p *PManager) spawnProcess(path string) {
 
 	ggiProc.encoder = gob.NewEncoder(ggiProc.connection)
 	ggiProc.decoder = gob.NewDecoder(ggiProc.connection)
-	p.processes = append(p.processes, ggiProc)
+	p.processes[process.Pid] = ggiProc
 }
 
 func spawnNewManager() *PManager {
@@ -61,7 +55,7 @@ func spawnNewManager() *PManager {
 	}
 
 	pm := &PManager{
-		[]*Process{},
+		map[int]*Process{},
 		IPCListener,
 	}
 	processManagers = append(processManagers, pm)
