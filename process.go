@@ -19,7 +19,7 @@ func (p *Process) kill() {
 	p.process.Kill()
 }
 
-func (p *Process) sendReq(w http.ResponseWriter, r *http.Request) {
+func (p *Process) handleRequest(w http.ResponseWriter, r *http.Request) {
 	p.encoder.Encode(r)
 	var res responsePack
 	p.decoder.Decode(&res)
