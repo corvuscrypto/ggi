@@ -2,6 +2,7 @@ package ggi
 
 import (
 	"encoding/gob"
+	"log"
 	"net/http"
 )
 
@@ -10,9 +11,9 @@ type requestPack struct {
 }
 
 type responsePack struct {
-	pid  int
-	code int
-	res  []byte
+	Pid  int
+	Code int
+	Res  []byte
 }
 
 func (p *PManager) listen() {
@@ -20,17 +21,18 @@ func (p *PManager) listen() {
 		conn, _ := p.socket.AcceptUnix()
 		enc := gob.NewEncoder(conn)
 		dec := gob.NewDecoder(conn)
-		var res responsePack
+		var res = &responsePack{}
 		//wait for the acknowledgement response
 		dec.Decode(&res)
 		if &res == nil {
 			continue
 		}
-		if res.pid == 0 {
+		log.Println(res)
+		if res.Pid == 0 {
 			continue
 		}
 		for _, proc := range p.processes {
-			if proc.process.Pid == res.pid {
+			if proc.process.Pid == res.Pid {
 				proc.connection = conn
 				proc.encoder = enc
 				proc.decoder = dec

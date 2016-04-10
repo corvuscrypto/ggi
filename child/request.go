@@ -1,13 +1,17 @@
 package child
 
-import "net/http"
+func handleRequest(r *Request) *responsePack {
 
-func handleRequest(r *http.Request) *responsePack {
-
-	//perform some routing later on
+	if v, ok := handlers[r.Path]; ok {
+		return &responsePack{
+			pid,
+			200,
+			v(r),
+		}
+	}
 	return &responsePack{
 		pid,
-		0,
+		404,
 		nil,
 	}
 }

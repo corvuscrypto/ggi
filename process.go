@@ -2,6 +2,7 @@ package ggi
 
 import (
 	"encoding/gob"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -20,11 +21,21 @@ func (p *Process) kill() {
 }
 
 func (p *Process) handleRequest(w http.ResponseWriter, r *http.Request) {
-	p.encoder.Encode(r)
+	req := &request{
+		nil,
+		r.URL.Path,
+	}
+	err := p.encoder.Encode(req)
+	if err != nil {
+		log.Println(err)
+	}
 	var res responsePack
-	p.decoder.Decode(&res)
+	err = p.decoder.Decode(&res)
+	if err != nil {
+		log.Println(err)
+	}
 	if &res == nil {
 		w.WriteHeader(http.StatusBadGateway)
 	}
-	w.Write(res.res)
+	w.Write(res.Res)
 }

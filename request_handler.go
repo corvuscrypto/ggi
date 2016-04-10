@@ -25,9 +25,12 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		proc = pm.spawnProcess(path, filePath)
 		if proc == nil {
-			log.Fatal("an Error occurred spawning a process", path, filePath)
+			log.Println("an Error occurred spawning a process", path, filePath)
+			w.WriteHeader(500)
+			return
 		}
 	}
+	log.Println("handling request")
 	proc.handleRequest(w, r)
-
+	log.Println("done")
 }

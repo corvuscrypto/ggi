@@ -2,22 +2,23 @@ package child
 
 import (
 	"encoding/gob"
+	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
 )
 
 var pid = os.Getpid()
 
-type requestPack struct {
-	req *http.Request
+type Request struct {
+	Params []string
+	Path   string
 }
 
 type responsePack struct {
-	pid  int
-	code int
-	res  []byte
+	Pid  int
+	Code int
+	Res  []byte
 }
 
 var connection struct {
@@ -26,16 +27,25 @@ var connection struct {
 	decoder *gob.Decoder
 }
 
+func writeErr(i interface{}) {
+	f, _ := os.Create("./test_output.txt")
+	defer f.Close()
+	f.WriteString(fmt.Sprintf("%v", i))
+}
+
 func connHandler() {
 	for {
-		var r requestPack
-		connection.decoder.Decode(&r)
-		if &r == nil {
+		var r = &Request{}
+		err := connection.decoder.Decode(r)
+		if err != nil {
+			writeErr(err)
+		}
+		if r == nil {
 			continue
 		}
-		if r.req != nil {
-			connection.encoder.Encode(handleRequest(r.req))
-		}
+		writeErr("received and handled:")
+		writeErr(r)
+		connection.encoder.Encode(handleRequest(r))
 	}
 }
 
@@ -51,5 +61,8 @@ func init() {
 	}
 	connection.encoder = gob.NewEncoder(connection.conn)
 	connection.decoder = gob.NewDecoder(connection.conn)
-	go connHandler()
+}
+
+func Start() {
+	connHandler()
 }
