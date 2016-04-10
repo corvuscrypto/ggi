@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
 )
 
 var processManagers = []*PManager{}
@@ -16,11 +17,29 @@ type PManager struct {
 }
 
 //spawn a process and setup the connection
-func (p *PManager) spawnProcess(routeName, path string) {
+func (p *PManager) spawnProcess(routeName, path string) *Process {
+	var oPath = path
+	if path[len(path)-3:] == ".go" {
+		path = path[len(path)-3:] + ".a"
+	} else {
+		if path[len(path)-1] == '/' {
+			path = path[:len(path)-1] + "/proc.a"
+		}
+	}
 	process, err := os.StartProcess(path, nil, &os.ProcAttr{})
 	if err != nil {
-		log.Println(err)
-		return
+		//perhaps it's just not compiled yet?
+		//attempt to compile the dir/file
+		err = exec.Command("go", "build", "-o", path, oPath).Run()
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+		process, err = os.StartProcess(path, nil, &os.ProcAttr{})
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
 	}
 
 	ggiProc := &Process{}
@@ -33,6 +52,7 @@ func (p *PManager) spawnProcess(routeName, path string) {
 	ggiProc.encoder = gob.NewEncoder(ggiProc.connection)
 	ggiProc.decoder = gob.NewDecoder(ggiProc.connection)
 	p.processes[routeName] = ggiProc
+	return ggiProc
 }
 
 func spawnNewManager() *PManager {
