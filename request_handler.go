@@ -1,0 +1,5 @@
+package ggi
+
+func handleRequest() {
+
+}

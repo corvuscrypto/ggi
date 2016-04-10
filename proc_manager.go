@@ -11,12 +11,12 @@ var processManagers = []*PManager{}
 
 //PManager is the primary process manager
 type PManager struct {
-	processes map[int]*Process
+	processes map[string]*Process
 	socket    *net.UnixListener
 }
 
 //spawn a process and setup the connection
-func (p *PManager) spawnProcess(path string) {
+func (p *PManager) spawnProcess(routeName, path string) {
 	process, err := os.StartProcess(path, nil, &os.ProcAttr{})
 	if err != nil {
 		log.Println(err)
@@ -32,7 +32,7 @@ func (p *PManager) spawnProcess(path string) {
 
 	ggiProc.encoder = gob.NewEncoder(ggiProc.connection)
 	ggiProc.decoder = gob.NewDecoder(ggiProc.connection)
-	p.processes[process.Pid] = ggiProc
+	p.processes[routeName] = ggiProc
 }
 
 func spawnNewManager() *PManager {
@@ -55,7 +55,7 @@ func spawnNewManager() *PManager {
 	}
 
 	pm := &PManager{
-		map[int]*Process{},
+		map[string]*Process{},
 		IPCListener,
 	}
 	processManagers = append(processManagers, pm)

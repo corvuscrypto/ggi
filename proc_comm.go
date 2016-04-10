@@ -15,7 +15,7 @@ type responsePack struct {
 	res  []byte
 }
 
-func (p *PManager) listenAndServe() {
+func (p *PManager) listen() {
 	for {
 		conn, _ := p.socket.AcceptUnix()
 		enc := gob.NewEncoder(conn)
@@ -29,12 +29,14 @@ func (p *PManager) listenAndServe() {
 		if res.pid == 0 {
 			continue
 		}
-
-		proc := p.processes[res.pid]
-		proc.connection = conn
-		proc.encoder = enc
-		proc.decoder = dec
-
+		for _, proc := range p.processes {
+			if proc.process.Pid == res.pid {
+				proc.connection = conn
+				proc.encoder = enc
+				proc.decoder = dec
+				break
+			}
+		}
 	}
 }
 
