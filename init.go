@@ -1,8 +1,6 @@
 package ggi
 
-var DEVELOPMENT = true
-
-func init() {
-	//create a single process manager and initiate the connection
-	spawnNewManager()
+//Serve sets ggi up for communication with processes over a unix socket
+func Serve() {
+	defaultServer.Serve()
 }

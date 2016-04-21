@@ -2,7 +2,6 @@ package ggi
 
 import (
 	"encoding/gob"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -10,6 +9,7 @@ import (
 
 //Process describes a process to be used for request handling
 type Process struct {
+	managerID  int
 	process    *os.Process
 	connection *net.UnixConn
 	encoder    *gob.Encoder
@@ -17,7 +17,21 @@ type Process struct {
 }
 
 func (p *Process) kill() {
+	//attempt to kill just in case
 	p.process.Kill()
+	//consume Zombie process
+	p.process.Wait()
+	for _, pm := range processManagers {
+		if pm.id == p.managerID {
+			for r, proc := range pm.processes {
+				if proc == p {
+					delete(pm.processes, r)
+					p = nil
+					return
+				}
+			}
+		}
+	}
 }
 
 func (p *Process) handleRequest(w http.ResponseWriter, r *http.Request) {
@@ -27,12 +41,16 @@ func (p *Process) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	err := p.encoder.Encode(req)
 	if err != nil {
-		log.Println(err)
+		p.kill()
+		w.WriteHeader(500)
+		return
 	}
 	var res responsePack
 	err = p.decoder.Decode(&res)
 	if err != nil {
-		log.Println(err)
+		p.kill()
+		w.WriteHeader(500)
+		return
 	}
 	if &res == nil {
 		w.WriteHeader(http.StatusBadGateway)

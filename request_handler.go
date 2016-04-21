@@ -3,6 +3,7 @@ package ggi
 import (
 	"log"
 	"net/http"
+	"sync"
 )
 
 //HandleRequest handles an incoming request and attempts to resolve it by
@@ -15,22 +16,25 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	var pm *PManager
-	if len(processManagers) == 0 {
-		pm = spawnNewManager()
-	} else {
-		pm = processManagers[0]
+	var pm = processManagers[0]
+
+	//get the waitGroup
+	lock, ok := pm.locks[path]
+	if !ok {
+		lock = &sync.Mutex{}
+		pm.locks[path] = lock
 	}
+	lock.Lock()
 	proc, ok := pm.processes[path]
 	if !ok {
 		proc = pm.spawnProcess(path, filePath)
 		if proc == nil {
-			log.Println("an Error occurred spawning a process", path, filePath)
+			lock.Unlock()
+			log.Println("an Error occurred spawning a process to serve ", path)
 			w.WriteHeader(500)
 			return
 		}
 	}
-	log.Println("handling request")
-	proc.handleRequest(w, r)
-	log.Println("done")
+	lock.Unlock()
+	go proc.handleRequest(w, r)
 }
