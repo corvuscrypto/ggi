@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"io/ioutil"
+	"log"
 	"strings"
 	"unsafe"
 )
@@ -14,8 +15,16 @@ func handleRequest(pipe *bufio.ReadWriter) {
 
 	//get the route from the http header
 	var path = parseHTTPHeadline((uintptr)(unsafe.Pointer(&data[0])), len(data))
+	p, ok := processes[path]
+	if !ok {
+		proc, err := spawnChildProcess(path, rm[path])
+		p = proc
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	pipe.Writer.Write(p.handle(data))
 
-	pipe.Writer.Write(processes[path].handle(data))
 }
 
 func parseHTTPHeadline(char uintptr, length int) string {
