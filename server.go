@@ -18,7 +18,7 @@ type Server struct {
 	ProcessTimeout          int
 
 	listenerFile    *os.File
-	processManagers []*PManager
+	processManagers map[int]*PManager
 }
 
 func (s *Server) setup() {
@@ -31,7 +31,9 @@ func (s *Server) setup() {
 	if l == nil {
 		log.Fatal("Unable to use port ", s.ServerPort, "; ", err)
 	}
-	l.Close()
+
+	//set the listenerFile field to the listener's file pointer
+	s.listenerFile, _ = l.File()
 
 	//check that StartingProcessManagers is not > MaxProcessManagers
 	if s.StartingProcessManagers > s.MaxProcessManagers {
@@ -61,5 +63,5 @@ var defaultServer = &Server{
 	false,
 	0,
 	nil,
-	[]*PManager{},
+	map[int]*PManager{},
 }
