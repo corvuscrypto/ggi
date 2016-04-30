@@ -9,50 +9,30 @@ import (
 
 //Server contains configuration information for the ggi server.
 //Some fields are ignored depending on settings.
-//E.g. TCPPort is only relevant if UseTCP is true, and ProcessTimeout is only
-//relevant if DynamicManagement is true.
+//E.g. ProcessTimeout is only relevant if DynamicManagement is true.
 type Server struct {
-	UseTCP                  bool
-	TCPPort                 int
-	SockPath                string
+	ServerPort              int
 	MaxProcessManagers      int
 	StartingProcessManagers int
 	DynamicManagement       bool
 	ProcessTimeout          int
 
+	listenerFile    *os.File
 	processManagers []*PManager
 }
 
 func (s *Server) setup() {
-	//are we using TCP?
-	if s.UseTCP {
-		//check that port is open
-		l, err := net.Listen("tcp", ":"+strconv.Itoa(s.TCPPort))
-		if l == nil {
-			log.Fatal("Unable to use port ", s.TCPPort, "; ", err)
-		}
-		l.Close()
-	} else {
-		//check to see we can make the socket
-		addr, err := net.ResolveUnixAddr("unix", s.SockPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		l, err := net.ListenUnix("unix", addr)
-		if err != nil {
-			//likely reached due to an already-existing socket. attempt to remove and
-			//create
-			os.Remove(s.SockPath)
-			l, err = net.ListenUnix("unix", addr)
-			if err != nil {
-				//halt the process and return nothing
-				log.Fatal("Unable to use socket at ", s.SockPath, "; ", err)
-				return
-			}
-			l.Close()
-		}
-		l.Close()
+	//get the tcp address
+	laddr, err := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(s.ServerPort))
+	if err != nil {
+		log.Fatal("Unable to resolve an address from the given port ", s.ServerPort, "; ", err)
 	}
+	l, err := net.ListenTCP("tcp", laddr)
+	if l == nil {
+		log.Fatal("Unable to use port ", s.ServerPort, "; ", err)
+	}
+	l.Close()
+
 	//check that StartingProcessManagers is not > MaxProcessManagers
 	if s.StartingProcessManagers > s.MaxProcessManagers {
 		log.Fatal("Starting process managers cannot be more than the maximum!")
@@ -75,12 +55,11 @@ func (s *Server) Serve() {
 
 //default settings
 var defaultServer = &Server{
-	true,
-	17001,
-	"",
+	8080,
 	10,
 	2,
 	false,
 	0,
+	nil,
 	[]*PManager{},
 }
