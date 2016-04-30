@@ -52,7 +52,9 @@ func (s *Server) setup() {
 //Serve using the associated Server's configuration
 func (s *Server) Serve() {
 	s.setup()
-	s.spawnNewManager()
+	for i := 0; i < s.StartingProcessManagers; i++ {
+		s.spawnNewManager()
+	}
 }
 
 //default settings
