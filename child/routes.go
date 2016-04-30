@@ -1,8 +1,10 @@
 package child
 
-var handlers = map[string]func(*Request) []byte{}
+import "net/http"
+
+var handlers = map[string]func(*http.Request) []byte{}
 
 //AddHandler associates a function with your request object
-func AddHandler(route string, f func(*Request) []byte) {
+func AddHandler(route string, f func(*http.Request) []byte) {
 	handlers[route] = f
 }

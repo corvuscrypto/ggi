@@ -1,30 +1,18 @@
 package child
 
 import (
-	"encoding/gob"
+	"bufio"
 	"fmt"
-	"log"
 	"net"
+	"net/http"
 	"os"
 )
 
 var pid = os.Getpid()
 
-type Request struct {
-	Params []string
-	Path   string
-}
-
-type responsePack struct {
-	Pid  int
-	Code int
-	Res  []byte
-}
-
 var connection struct {
-	conn    *net.UnixConn
-	encoder *gob.Encoder
-	decoder *gob.Decoder
+	conn   *net.TCPConn
+	reader *bufio.Reader
 }
 
 func writeErr(i interface{}) {
@@ -35,34 +23,27 @@ func writeErr(i interface{}) {
 
 func connHandler() {
 	for {
-		var r = &Request{}
-		err := connection.decoder.Decode(r)
+		//make the new request
+		req, err := http.ReadRequest(connection.reader)
 		if err != nil {
-			writeErr(err)
+			connection.conn.Write([]byte{})
 		}
-		if r == nil {
-			continue
-		}
-		writeErr("received and handled:")
-		writeErr(r)
-		connection.encoder.Encode(handleRequest(r))
+		connection.conn.Write(handleRequest(req))
 	}
 }
 
 func init() {
-	addr, err := net.ResolveUnixAddr("unix", "/var/run/ggi.sock")
+	addrStr := os.Args[1]
+	addr, err := net.ResolveTCPAddr("tcp", addrStr)
 	if err != nil {
 		//if there's an error, kill start the process
-		log.Fatal(err)
+		os.Exit(1)
 	}
-	connection.conn, err = net.DialUnix("unix", nil, addr)
+	connection.conn, err = net.DialTCP("tcp", nil, addr)
 	if err != nil {
-		log.Fatal(err)
+		os.Exit(1)
 	}
-	connection.encoder = gob.NewEncoder(connection.conn)
-	connection.decoder = gob.NewDecoder(connection.conn)
-}
-
-func Start() {
-	connHandler()
+	//make a bufio reader from the connection and store it in connection
+	connection.reader = bufio.NewReader(connection.conn)
+	go connHandler()
 }
