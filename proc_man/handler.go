@@ -36,6 +36,7 @@ func parseHTTPHeadline(char uintptr, length int) string {
 		if b == '\n' {
 			break
 		}
+		path += string(b)
 	}
 
 	header := strings.Split(path, " ")
