@@ -50,10 +50,13 @@ func getExecPath(path string) string {
 	dir, outfile := filepath.Split(path)
 	if filepath.Ext(outfile) != ".go" {
 		// normalize the path and filename as necessary
-		_, filename := filepath.Split(dir)
+		var filename string
+		if outfile == "" {
+			_, filename = filepath.Split(dir[:len(dir)-1])
+		} else {
+			_, filename = filepath.Split(dir)
+		}
 		outfile = dir + "/" + filename
-		//adjust the path to have a * suffix
-		path += "/*"
 	} else {
 		// strip the extension
 		outfile = dir + "/" + outfile[:len(outfile)-3]
