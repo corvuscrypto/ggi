@@ -10,6 +10,8 @@ type Response struct {
 }
 
 func (r *Response) Write(b []byte) (int, error) {
+	//set status to 200
+	r.StatusCode = 200
 	if r.Data == nil {
 		r.Data = b
 	} else {

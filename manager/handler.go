@@ -36,5 +36,11 @@ func (c *connHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data, _ := httputil.DumpRequest(r, true)
 
 	res := p.handle(data)
-	w.Write(res)
+	for k, v := range res.Headers {
+		for _, sv := range v {
+			w.Header().Add(k, sv)
+		}
+	}
+	w.WriteHeader(res.StatusCode)
+	w.Write(res.Data)
 }

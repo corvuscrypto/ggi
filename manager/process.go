@@ -14,9 +14,9 @@ type process struct {
 	decoder *gob.Decoder
 }
 
-func (p *process) handle(data []byte) []byte {
+func (p *process) handle(data []byte) *transport.Response {
 	p.pipe.Write(data)
 	var res = &transport.Response{}
 	p.decoder.Decode(res)
-	return res.Data
+	return res
 }
