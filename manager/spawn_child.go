@@ -4,10 +4,7 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync"
 )
-
-var connectionLocker = &sync.Mutex{}
 
 var childListener *net.TCPListener
 
@@ -21,9 +18,7 @@ func makeChildListener() {
 }
 
 func spawnChildProcess(route string, proc string) (*process, error) {
-	//first lock the function to prevent other connections
-	//from accidentally associating with the new process
-	connectionLocker.Lock()
+
 	p, err := os.StartProcess(proc, []string{childListener.Addr().String()}, &os.ProcAttr{})
 	if err != nil {
 		log.Fatal(err)

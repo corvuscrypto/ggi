@@ -5,16 +5,23 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"sync"
 	"unsafe"
 )
 
 var processes = map[string]*process{}
+var connectionLocker = &sync.Mutex{}
 
 func handleRequest(pipe *bufio.ReadWriter) {
 	data, _ := ioutil.ReadAll(pipe.Reader)
 
 	//get the route from the http header
 	var path = parseHTTPHeadline((uintptr)(unsafe.Pointer(&data[0])), len(data))
+
+	//first lock the function to prevent other connections
+	//from accidentally associating with the new process
+
+	connectionLocker.Lock()
 	p, ok := processes[path]
 	if !ok {
 		proc, err := spawnChildProcess(path, rm[path])
@@ -23,6 +30,8 @@ func handleRequest(pipe *bufio.ReadWriter) {
 			log.Fatal(err)
 		}
 	}
+	connectionLocker.Unlock()
+
 	pipe.Writer.Write(p.handle(data))
 
 }

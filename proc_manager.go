@@ -24,7 +24,12 @@ func (s *Server) spawnNewManager() {
 	s.processManagers[idSeq] = pm
 
 	proc := exec.Command("./proc_man")
-	proc.ExtraFiles = []*os.File{s.listenerFile}
+	proc.ExtraFiles = []*os.File{
+		s.listenerFile,
+		s.routeFile,
+	}
+	//set the stdout to this process's stdout
+	proc.Stdout = os.Stdout
 	//start the command asynchronously
 	proc.Start()
 

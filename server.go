@@ -18,6 +18,8 @@ type Server struct {
 	ProcessTimeout          int
 
 	listenerFile    *os.File
+	routes          map[string]string
+	routeFile       *os.File
 	processManagers map[int]*PManager
 }
 
@@ -52,9 +54,11 @@ func (s *Server) setup() {
 //Serve using the associated Server's configuration
 func (s *Server) Serve() {
 	s.setup()
+	s.writeRoutes()
 	for i := 0; i < s.StartingProcessManagers; i++ {
 		s.spawnNewManager()
 	}
+	select {}
 }
 
 //default settings
@@ -64,6 +68,8 @@ var defaultServer = &Server{
 	2,
 	false,
 	0,
+	nil,
+	map[string]string{},
 	nil,
 	map[int]*PManager{},
 }
