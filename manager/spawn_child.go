@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"encoding/gob"
 	"log"
 	"net"
 	"os"
@@ -40,6 +41,7 @@ func spawnChildProcess(route string, proc string) (*process, error) {
 	process := &process{
 		cmd.Process,
 		conn,
+		gob.NewDecoder(conn),
 	}
 	processes[route] = process
 	return process, nil

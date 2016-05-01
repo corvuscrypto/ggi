@@ -9,14 +9,14 @@ import (
 )
 
 type process struct {
-	proc *os.Process
-	pipe *net.TCPConn
+	proc    *os.Process
+	pipe    *net.TCPConn
+	decoder *gob.Decoder
 }
 
 func (p *process) handle(data []byte) []byte {
 	p.pipe.Write(data)
 	var res = &transport.Response{}
-	dec := gob.NewDecoder(p.pipe)
-	dec.Decode(res)
+	p.decoder.Decode(res)
 	return res.Data
 }
