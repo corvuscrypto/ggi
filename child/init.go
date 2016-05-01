@@ -20,13 +20,12 @@ var connection struct {
 
 func connHandler() {
 	for {
-		var res = &transport.Response{}
+		var res = new(transport.Response)
 		//make the new request
 		req, err := http.ReadRequest(connection.reader)
-		if err != nil {
-			res.Data = []byte{}
+		if err == nil {
+			handleRequest(res, req)
 		}
-		res.Data = handleRequest(req)
 		connection.encoder.Encode(res)
 	}
 }

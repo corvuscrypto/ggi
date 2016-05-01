@@ -2,10 +2,8 @@ package child
 
 import "net/http"
 
-func handleRequest(r *http.Request) []byte {
-
+func handleRequest(w http.ResponseWriter, r *http.Request) {
 	if v, ok := handlers[r.URL.Path]; ok {
-		return v(r)
+		v(w, r)
 	}
-	return []byte{}
 }
