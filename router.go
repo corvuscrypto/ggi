@@ -11,6 +11,11 @@ func (s *Server) RegisterRoute(path, filepath string) {
 	s.routes[path] = filepath
 }
 
+//RegisterRoute registers a path from a request to a particular executable file
+func RegisterRoute(path, filepath string) {
+	defaultServer.routes[path] = filepath
+}
+
 //write the routes to a file in tmp and store the file pointer
 func (s *Server) writeRoutes() {
 	//create the empty file in /tmp
