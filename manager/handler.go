@@ -1,23 +1,24 @@
 package manager
 
 import (
-	"bufio"
-	"io/ioutil"
 	"log"
-	"strings"
+	"net/http"
+	"net/http/httputil"
 	"sync"
-	"unsafe"
 )
 
 var processes = map[string]*process{}
 var connectionLocker = &sync.Mutex{}
 
-func handleRequest(pipe *bufio.ReadWriter) {
-	data, _ := ioutil.ReadAll(pipe.Reader)
-
+func (c *connHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//get the route from the http header
-	var path = parseHTTPHeadline((uintptr)(unsafe.Pointer(&data[0])), len(data))
+	path := r.URL.Path
 
+	//if we don't track this route, 404 it
+	if _, ok := rm[path]; !ok {
+		w.WriteHeader(404)
+		return
+	}
 	//first lock the function to prevent other connections
 	//from accidentally associating with the new process
 
@@ -32,25 +33,8 @@ func handleRequest(pipe *bufio.ReadWriter) {
 	}
 	connectionLocker.Unlock()
 
-	pipe.Writer.Write(p.handle(data))
+	data, _ := httputil.DumpRequest(r, true)
 
-}
-
-func parseHTTPHeadline(char uintptr, length int) string {
-	path := ""
-
-	//use pointers and save some time here
-	for i := 0; i < length; i++ {
-		var b = *(*byte)(unsafe.Pointer(char + uintptr(i)))
-		if b == '\n' {
-			break
-		}
-		path += string(b)
-	}
-
-	header := strings.Split(path, " ")
-	if len(header) > 1 {
-		return header[1]
-	}
-	return ""
+	res := p.handle(data)
+	w.Write(res)
 }

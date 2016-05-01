@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/exec"
+	"path/filepath"
 )
 
 var childListener *net.TCPListener
@@ -18,19 +20,43 @@ func makeChildListener() {
 }
 
 func spawnChildProcess(route string, proc string) (*process, error) {
-
-	p, err := os.StartProcess(proc, []string{childListener.Addr().String()}, &os.ProcAttr{})
+	//normalize proc
+	path := getExecPath(proc)
+	cmd := exec.Command(path, childListener.Addr().String())
+	cmd.Stderr = os.Stdout
+	cmd.Stdout = os.Stdout
+	err := cmd.Start()
 	if err != nil {
-		log.Fatal(err)
+		compile(proc)
+		err = cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	conn, err := childListener.AcceptTCP()
 	if err != nil {
 		return nil, err
 	}
 	process := &process{
-		p,
+		cmd.Process,
 		conn,
 	}
 	processes[route] = process
 	return process, nil
+}
+
+func getExecPath(path string) string {
+	// get the last dir in the path
+	dir, outfile := filepath.Split(path)
+	if filepath.Ext(outfile) != ".go" {
+		// normalize the path and filename as necessary
+		_, filename := filepath.Split(dir)
+		outfile = dir + "/" + filename
+		//adjust the path to have a * suffix
+		path += "/*"
+	} else {
+		// strip the extension
+		outfile = dir + "/" + outfile[:len(outfile)-3]
+	}
+	return outfile
 }

@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -17,11 +16,10 @@ func compile(path string) {
 		path += "/*"
 	} else {
 		// strip the extension
-		outfile = dir + "/" + outfile[:len(outfile)-4]
+		outfile = dir + "/" + outfile[:len(outfile)-3]
 	}
 
 	cmd := exec.Command("go", "build", "-o", outfile, path)
-	cmd.Stderr = os.Stdout
 	cmd.Run()
 
 }
