@@ -30,6 +30,7 @@ func (s *Server) spawnNewManager() {
 	}
 	//set the stdout to this process's stdout
 	proc.Stdout = os.Stdout
+	proc.Stderr = os.Stdout
 	//start the command asynchronously
 	proc.Start()
 
