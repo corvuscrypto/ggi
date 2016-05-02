@@ -5,7 +5,7 @@ import (
 	"syscall"
 )
 
-const iNotifyEvents = syscall.IN_MODIFY | syscall.IN_DELETE
+const iNotifyEvents = syscall.IN_CLOSE_WRITE
 
 type iNotify struct {
 	fd         int
