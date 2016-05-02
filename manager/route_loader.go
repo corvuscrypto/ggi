@@ -2,7 +2,6 @@ package manager
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -37,7 +36,6 @@ func generatePriorityMatcher() {
 		//for each route, we want to split by the / separator.
 		//then we just use insertion sort to sort into priorityMatcher for matching
 		splitPath := strings.Split(k, "/")
-		fmt.Println(k)
 		//toss any trailing empty strings
 		if splitPath[len(splitPath)-1] == "" {
 			splitPath = splitPath[:len(splitPath)-1]
