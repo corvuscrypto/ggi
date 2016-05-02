@@ -21,10 +21,11 @@ var connection struct {
 func connHandler() {
 	for {
 		var res = new(transport.Response)
+		res.Headers = make(http.Header)
 		//make the new request
 		req, err := http.ReadRequest(connection.reader)
 		if err == nil {
-			handleRequest(res, req)
+			http.DefaultServeMux.ServeHTTP(res, req)
 		}
 		connection.encoder.Encode(res)
 	}
@@ -46,4 +47,9 @@ func init() {
 	//make gob encoder
 	connection.encoder = gob.NewEncoder(connection.conn)
 	go connHandler()
+}
+
+//WaitAndListen blocks the process so it can readily handle new requests
+func WaitAndListen() {
+	select {}
 }
