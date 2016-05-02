@@ -11,6 +11,9 @@ import (
 
 var childListener *net.TCPListener
 
+//set this to true for now
+var watchChanges = true
+
 func makeChildListener() {
 	// resolve free tcp address
 	addr, err := net.ResolveTCPAddr("tcp", "0")
@@ -21,29 +24,18 @@ func makeChildListener() {
 }
 
 func spawnChildProcess(route string, proc string) (*process, error) {
+	//route in this case is the src code route
 	//normalize proc
 	path := getExecPath(proc)
-	cmd := exec.Command(path, childListener.Addr().String())
-	cmd.Stderr = os.Stdout
-	cmd.Stdout = os.Stdout
-	err := cmd.Start()
-	if err != nil {
-		compile(proc)
-		err = cmd.Start()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	conn, err := childListener.AcceptTCP()
-	if err != nil {
-		return nil, err
-	}
-	process := new(process)
-	process.proc = cmd.Process
-	process.pipe = conn
-	process.decoder = gob.NewDecoder(conn)
 
+	process := new(process)
+	//store the generating path
+	process.srcPath = proc
+	process.execPath = path
+	process.loadProcess()
 	processes[route] = process
+	//add the notify instance
+	process.newINotifyInstance()
 	return process, nil
 }
 
@@ -64,4 +56,35 @@ func getExecPath(path string) string {
 		outfile = dir + "/" + outfile[:len(outfile)-3]
 	}
 	return outfile
+}
+
+func (p *process) loadProcess() {
+	cmd := exec.Command(p.execPath, childListener.Addr().String())
+	cmd.Stderr = os.Stdout
+	cmd.Stdout = os.Stdout
+	err := cmd.Start()
+	if err != nil {
+		p.compile()
+		err = cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	conn, err := childListener.AcceptTCP()
+	if err != nil {
+		return
+	}
+
+	p.proc = cmd.Process
+	p.pipe = conn
+	p.decoder = gob.NewDecoder(conn)
+
+}
+
+func (p *process) reloadProcess() {
+	//kill-wait to release the current process
+	p.proc.Kill()
+	p.proc.Wait()
+	//reload the process into the struct
+	p.loadProcess()
 }

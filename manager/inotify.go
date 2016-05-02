@@ -2,12 +2,13 @@ package manager
 
 import (
 	"fmt"
-	"os"
 	"syscall"
 )
 
+const iNotifyEvents = syscall.IN_MODIFY | syscall.IN_DELETE
+
 type iNotify struct {
-	file       *os.File
+	fd         int
 	watchdescs []int
 }
 
@@ -17,18 +18,33 @@ func (p *process) newINotifyInstance() {
 	if err != nil {
 		fmt.Println("Manager: Unable to initialize an INotify instance; ", err)
 	}
-	in.file = os.NewFile(uintptr(f), "")
-
+	in.fd = f
+	in.addWatchers(p)
+	p.iNotifyInstance = in
 	go p.watchForINotifyEvents()
 }
 
+func (i *iNotify) addWatchers(p *process) {
+	i.watchdescs = []int{}
+	for _, f := range p.srcFilepaths {
+		wd, err := syscall.InotifyAddWatch(i.fd, f, iNotifyEvents)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		i.watchdescs = append(i.watchdescs, wd)
+	}
+}
+
 func (p *process) watchForINotifyEvents() {
-	in := p.iNotifyInstance
+
 	for {
-		var b []byte
+		var b = make([]byte, 2<<16)
 		//this will block until an event occurs
-		in.file.Read(b)
+		syscall.Read(p.iNotifyInstance.fd, b)
+
 		//dispatch the compile and replace the process
-		//Code goes here
+		p.compile()
+		p.reloadProcess()
 	}
 }

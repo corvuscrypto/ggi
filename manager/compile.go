@@ -1,13 +1,16 @@
 package manager
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
 
-func compile(path string) {
+func (p *process) compile() {
+	path := p.srcPath
+	fmt.Println("Compiling ", path)
 	commandArgs := []string{"build", "-o"}
 	// get the last dir in the path
 	dir, outfile := filepath.Split(path)
@@ -35,6 +38,9 @@ func compile(path string) {
 		outfile = dir + "/" + outfile[:len(outfile)-3]
 		commandArgs = append(commandArgs, outfile, path)
 	}
+
+	//set the src files on the struct field
+	p.srcFilepaths = commandArgs[3:]
 
 	cmd := exec.Command("go", commandArgs...)
 	cmd.Stderr = os.Stdout
