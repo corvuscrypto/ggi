@@ -38,11 +38,11 @@ func spawnChildProcess(route string, proc string) (*process, error) {
 	if err != nil {
 		return nil, err
 	}
-	process := &process{
-		cmd.Process,
-		conn,
-		gob.NewDecoder(conn),
-	}
+	process := new(process)
+	process.proc = cmd.Process
+	process.pipe = conn
+	process.decoder = gob.NewDecoder(conn)
+
 	processes[route] = process
 	return process, nil
 }

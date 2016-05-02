@@ -9,9 +9,10 @@ import (
 )
 
 type process struct {
-	proc    *os.Process
-	pipe    *net.TCPConn
-	decoder *gob.Decoder
+	proc            *os.Process
+	pipe            *net.TCPConn
+	decoder         *gob.Decoder
+	iNotifyInstance iNotify
 }
 
 func (p *process) handle(data []byte) *transport.Response {
