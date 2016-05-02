@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 	"sync"
 )
 
@@ -14,10 +15,14 @@ func (c *connHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//get the route from the http header
 	path := r.URL.Path
 
-	//if we don't track this route, 404 it
 	if _, ok := rm[path]; !ok {
-		w.WriteHeader(404)
-		return
+		//if we don't track this route, attempt to find the best match
+		path = findRoute(path)
+		// if we still haven't found a match, 404 it yo
+		if path == "" {
+			w.WriteHeader(404)
+			return
+		}
 	}
 	//first lock the function to prevent other connections
 	//from accidentally associating with the new process
@@ -43,4 +48,14 @@ func (c *connHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(res.StatusCode)
 	w.Write(res.Data)
+}
+
+func findRoute(path string) string {
+	var result string
+	for _, v := range priorityMatcher {
+		if strings.Index(path, v) == 0 {
+			return v
+		}
+	}
+	return result
 }
